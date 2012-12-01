@@ -261,6 +261,32 @@ describe FilterIt::Filter do
 
           end
 
+          describe "inherit" do
+
+            it "should call the filter with current value" do
+              FilterIt.register_filter("foo") do
+                requires :a
+              end
+
+              @ctx.run({ :a => 10, :b => 20}) do
+                inherit "foo"
+              end
+              @ctx.final_data.should be_eql({ :a => 10 })
+            end
+
+            it "should preserve past matches" do
+              FilterIt.register_filter("foo") do
+                requires :a
+              end
+
+              @ctx.run({ :a => 10, :b => 20, :c => 30 }) do
+                requires :b
+                inherit "foo"
+              end
+              @ctx.final_data.should be_eql({ :a => 10, :b => 20 })
+            end
+          end
+
         end
 
       end
@@ -320,6 +346,16 @@ describe FilterIt::Filter do
 
         end
 
+        describe "inherit" do
+
+          it "should inherit filter" do
+            FilterIt.register_filter(:foo) do
+              requires :a
+            end
+            @helpers.inherit({ :a => 10, :b => 20 }, :foo).should be_eql({ :a => 10 })
+          end
+
+        end
 
       end
 
