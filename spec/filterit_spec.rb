@@ -37,4 +37,35 @@ describe FilterIt do
     FilterIt.get_filter('lol').should be_nil
   end
 
+  describe "run_filter" do
+
+    it "should run the block if given" do
+      FilterIt.run_filter({ :a => 1, :b => 2 }) do
+        requires :a
+      end.should be_eql({ :a => 1 })
+    end
+
+    it "should run a filter by name if no block is given" do
+      FilterIt.register_filter("foo") do
+        requires :a
+      end
+
+      FilterIt.run_filter({ :a => 1, :b => 2 }, "foo").should be_eql({ :a => 1 })
+    end
+
+    it "should accept contexts" do
+      FilterIt.register_filter("foo") do |ctx|
+        ctx.bar.should be_eql(10)
+        ctx.requires :a
+      end
+
+      FilterIt.run_filter({ :a => 1, :b => 2 }, "foo", { :bar => 10 }).should be_eql({ :a => 1 })
+      FilterIt.run_filter({ :a => 1, :b => 2 }, { :bar => 20 }) do |ctx|
+        ctx.bar.should be_eql(20)
+        ctx.requires :a
+      end.should be_eql({ :a => 1 })
+    end
+
+  end
+
 end

@@ -24,6 +24,13 @@ module FilterIt
             end
           end
         end
+
+        if block_given?
+          ctx = FilterIt.run_filter(current_data, @context, true, &block)
+          current_data = ctx.final_data || ctx.last_run_value
+          raise FilterIt::Filter::InvalidEntry if current_data.nil?
+        end
+
         set_data(name, current_data)
       end
 

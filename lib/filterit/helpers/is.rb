@@ -1,28 +1,14 @@
 require 'filterit/helper'
 
-module FilterIt
-
-  module Helpers
-
-    class IsHelper < FilterIt::Helpers::Base
-
-      register_helper :is
-
-      def is(data, *classes)
-        classes.flatten!
-        if classes.include?(data) or classes.include?(data.class)
-          return data
-        else
-          classes.each do |c|
-            return data if data.is_a?(c)
-          end
-        end
-
-        nil
-      end
-
+FilterIt::Helpers.register_helper(:is) do |data, *classes|
+  classes.flatten!
+  if classes.include?(data) or classes.include?(data.class)
+    next data
+  else
+    out = classes.each do |c|
+      break data if data.is_a?(c)
     end
-
+    next out if out != classes
   end
-
+  nil
 end

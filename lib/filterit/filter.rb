@@ -9,14 +9,23 @@ module FilterIt
       #@opts = opts
     end
 
-    def run(*contexts)
-      Context.new(*contexts).run(&@block)
+    def run(data, contexts=[], return_ctx=false)
+      contexts ||= []
+      contexts = [contexts] unless contexts.is_a?(Array)
+      ctx = Context.new(*contexts)
+      ctx.run(data, &@block)
+      if return_ctx
+        ctx
+      else
+        ctx.final_data
+      end
     end
 
     class Context
 
       attr_reader :data
       attr_accessor :final_data
+      attr_accessor :last_run_value
 
       def initialize(*contexts)
         @contexts = []
@@ -69,12 +78,7 @@ module FilterIt
       def run(data = nil, &block)
         @data = data
         @final_data = nil
-        if block.arity == 1
-          block.call(self)
-        else
-          instance_eval(&block)
-        end
-        @final_data
+        @last_run_value = block.arity == 1 ? block.call(self) : instance_eval(&block)
       end
 
       def helpers

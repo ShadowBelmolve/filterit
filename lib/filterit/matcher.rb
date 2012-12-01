@@ -19,6 +19,14 @@ module FilterIt
         @context.data
       end
 
+      def final_data
+        @context.final_data
+      end
+
+      def final_data=(v)
+        @context.final_data = v
+      end
+
       def has_value_for(name)
         data[find_key(name)]
       end

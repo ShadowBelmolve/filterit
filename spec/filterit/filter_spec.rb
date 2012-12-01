@@ -1,5 +1,9 @@
 describe FilterIt::Filter do
 
+  before(:each) do
+    FilterIt.instance_variable_set :@filters, {}
+  end
+
   describe FilterIt::Filter::Context, '#context' do
 
     it "should accept any number of options as contexts" do
@@ -166,60 +170,95 @@ describe FilterIt::Filter do
 
         end
 
-        describe "requires" do
+        describe "matchers" do
 
-          it "should set final_data correctly" do
-            data = { :foo => :bar, :lol => :win }
+          describe "requires" do
 
-            @ctx.run(data) do
-              requires :foo
-            end.should be_eql({ :foo => :bar })
-          end
+            it "should set final_data correctly" do
+              data = { :foo => :bar, :lol => :win }
 
-          it "should raise FilterIt::Filter::InvalidEntry if requires don't pass" do
-            data = { :foo => :bar, :lol => :win }
-
-            expect {
               @ctx.run(data) do
-                requires :die
+                requires :foo
               end
-            }.to raise_error(FilterIt::Filter::InvalidEntry)
-          end
+              @ctx.final_data.should be_eql({ :foo => :bar })
+            end
 
-          it "should be able to use all helpers" do
-            data = { :a => :a, :b => 1, :c => "foo" }
-            @ctx.run(data) do
-              requires :a, :is => [Integer, String, Symbol]
-              requires :b, :is => Integer, :between => 0..2
-            end.should be_eql({ :a => :a, :b => 1 })
-          end
+            it "should raise FilterIt::Filter::InvalidEntry if requires don't pass" do
+              data = { :foo => :bar, :lol => :win }
 
-          it "should raise if any helpers don't pass" do
-            expect {
-              @ctx.run({ :a => :a, :b => 10 }) do
-                requires :a, :is => [String, Integer, Hash]
+              expect {
+                @ctx.run(data) do
+                  requires :die
+                end
+              }.to raise_error(FilterIt::Filter::InvalidEntry)
+            end
+
+            it "should be able to use all helpers" do
+              data = { :a => :a, :b => 1, :c => "foo" }
+              @ctx.run(data) do
+                requires :a, :is => [Integer, String, Symbol]
+                requires :b, :is => Integer, :between => 0..2
               end
-            }
+              @ctx.final_data.should be_eql({ :a => :a, :b => 1 })
+            end
+
+            it "should raise if any helpers don't pass" do
+              expect {
+                @ctx.run({ :a => :a, :b => 10 }) do
+                  requires :a, :is => [String, Integer, Hash]
+                end
+              }.to raise_error(FilterIt::Filter::InvalidEntry)
+            end
+
+            it "should run block after all helpers and use it final_data value" do
+              @ctx.run({ :a => { :b => 2, :c => 3 }}) do
+                requires :a, :is => [Hash] do
+                  requires :b
+                end
+              end
+              @ctx.final_data.should be_eql({ :a => { :b => 2 }})
+            end
+
+            it "should run block after all helpers and use it return value if final_data isn't set" do
+              @ctx.run({ :a => { :b => 2, :c => 3}}) do
+                requires :a, :is => [Hash] do
+                  5
+                end
+              end
+              @ctx.final_data.should be_eql({ :a => 5 })
+            end
+
+            it "should fail if block returns nil" do
+              expect {
+                @ctx.run({ :a => { :b => 2 }}) do
+                  requires :a, :is => [Hash] do
+                    nil
+                  end
+                end
+              }.to raise_error(FilterIt::Filter::InvalidEntry)
+            end
+
           end
 
-        end
+          describe "optional" do
 
-        describe "optional" do
+            it "should set final_data correctly" do
+              data = { :foo => :bar, :lol => :win }
 
-          it "should set final_data correctly" do
-            data = { :foo => :bar, :lol => :win }
+              @ctx.run(data) do
+                optional :foo
+              end
+              @ctx.final_data.should be_eql({ :foo => :bar })
+            end
 
-            @ctx.run(data) do
-              optional :foo
-            end.should be_eql({ :foo => :bar })
-          end
+            it "should not raise FilterIt::Filter::InvalidEntry if optional don't pass" do
+              data = { :foo => :bar, :lol => :win }
 
-          it "should not raise FilterIt::Filter::InvalidEntry if optional don't pass" do
-            data = { :foo => :bar, :lol => :win }
+              @ctx.run(data) do
+                optional :dont_die
+              end.should be_nil
+            end
 
-            @ctx.run(data) do
-              optional :dont_die
-            end.should be_nil
           end
 
         end
@@ -280,6 +319,7 @@ describe FilterIt::Filter do
           end
 
         end
+
 
       end
 
